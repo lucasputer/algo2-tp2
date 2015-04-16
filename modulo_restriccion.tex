@@ -1,0 +1,181 @@
+\section{M\'odulo Restriccion}
+\subsection{Interfaz}
+
+\textbf{se explica con}: Restriccion
+
+  \textbf{usa}: tags, $dicc_t$(tags,bool), bool
+  
+  \textbf{genero}: genero
+  
+\subsubsection{Operaciones de Restriccion}
+
+\InterfazFuncion{CrearRestriccion}{\In{t}{string}}{restr}
+  [t != AND $\wedge$ t != OR $\wedge$ t != NOT $\wedge$ 0 < $|$t$|$ < 65]
+  {$res \igobs$ $<t>$}
+  [O($|$r$|$)]
+  [Crea una nueva restriccion en base a un tag unico] \\
+
+\InterfazFuncion{Negar}{\In{r}{restr}}{restr}
+  [r $\igobs$ $r_0$]
+  {r $\igobs$ NOT $r_0$}
+  [O($|$r$|$)]
+  [Niega la restriccion dada, generando otra] \\
+
+\InterfazFuncion{And}{\In {r}{restr}, \In {rOtra}{restr}}{restr}
+  [r $\igobs$ $r_0$]
+  {r $\igobs$ $r_0$ AND rOtra}
+  [O($|$r$|$)]
+  [Hace and de las dos restricciones, generando otra.] \\ 
+
+\InterfazFuncion{Or}{\In {r}{restr}, \In {rOtra}{restr}}{restr}
+  [r $\igobs$ $r_0$]
+  {r $\igobs$ $r_0$ Or rOtra}
+  [O($|$r$|$)]
+  [Hace or de las dos restricciones, generando otra.] \\
+
+  \InterfazFuncion{Copiar}{\In {r}{restr}}{restr}
+  [true]
+  {res $\igobs$ r}
+  [O($|$r$|$)]
+  [Crea una copia de la restricci\'on] \\
+
+\InterfazFuncion{Verifica}{\In {r}{restr},\In {ts}{$dicc_t$(tags,bool)}}{bool}
+  [True]
+  {res == verifica?(ts,r)}
+  [O($|$r$|$)]
+
+\subsection{Representaci\'on}
+\subsubsection{Representaci\'on de Restricci\'on}
+
+Representamos cada nodo del arbol con una clave y dos punteros a nodos hijos. Si la clave esta entre los strings (AND, OR, NOT), se considera al nodo como un nodo de operacion, y por lo tanto, si la clave es AND u OR sus dos punteros no pueden ser NULL, y si la clave es NOT, su puntero derecho debe ser NULL y su puntero izquiero no. Los nodos cuya clave no este entre las palabras (AND, OR y NOT) deberan tener como NULL a sus dos punteros.
+
+\begin{Estructura}{restr}[restr\_tup]
+    \begin{Tupla}[restr\_tup]
+      \tupItem{nombre}{string}
+      \tupItem{izq}{puntero(restr)}
+      \tupItem{der}{puntero(restr)}
+      \tupItem{tam}{nat}
+    \end{Tupla}
+    \end{Estructura} 
+    
+\subsubsection{Invariante de Representaci\'on}
+
+\renewcommand{\labelenumi}{(\Roman{enumi})}
+\begin{enumerate}
+\item El tama\~no de un nodo se define como la suma del tama\~no de sus hijos + 1.
+\item El arbol no debe tener ciclos, o sea, existe n en Nat tal que n > al tama\~no de cada uno de los nodos del \'arbol
+\item Los nodos hoja tienen clave disinta de (AND, OR, NOT)
+\item Los nodos NO hoja tienen su clave entre los valores (AND, OR, NOT)
+\item Si el nodo tiene clave entre los valores (AND, OR) sus dos punteros son distintos de NULL
+\item Si el nodo tiene como clave NOT, su puntero derecho debera ser NULL y su puntero izquierdo debera ser distinto de NULL
+\item Cada nodo es un arbol en si mismo
+\end{enumerate} 
+    
+\subsubsection{Funci\'on de Abstracci\'on}
+Abs : restr\_tup  $\rightarrow$ Restriccion \\
+
+Abs(e) $\igobs$ r: restr\_tup \  |\  $\forall$ cj : conj(tag) \\
+\phantom{pala}Verifica?(r, cj) $\Leftrightarrow$ Verifica$?$(e, cj)
+
+
+\subsection{Algoritmos}
+
+\lstset{style=alg}
+
+\begin{lstlisting}[mathescape]
+'\alg{iCrearRestriccion}{\In{t}{string}}{restr}'
+    
+    restr restriccion
+    restriccion.nombre $\leftarrow$ t '\ote{1}'
+    restriccion.izq $\leftarrow$ NULL '\ote{1}'
+    restriccion.der $\leftarrow$ NULL '\ote{1}'
+    restriccion.tam $\leftarrow$ 1 '\ote{1}'
+    res $\leftarrow$ *restriccion  '\ote{1}'
+    
+'\ofi{O(1)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iNegar}{\Inout{r}{restr}}{restr}'
+    
+    restr not $\rightarrow$  <"NOT",NULL,NULL,NULL> '\ote{1}'
+    not$\rightarrow$izq  $\leftarrow$ iCopiar(r) '\ote{r.tam}'
+    not.tam  $\leftarrow$ r.tam + 1 '\ote{1}'
+    ret $\leftarrow$ not '\ote{1}'
+   
+'\ofi{O(r.tam)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iOr}{\In{r}{restr}, \In{rOtra}{restr}}{restr}'
+
+    restr or $\rightarrow$  <"OR",NULL,NULL,NULL> '\ote{1}'
+    or$\rightarrow$izq  $\leftarrow$ iCopiar(r) '\ote{r.tam}'
+    or$\rightarrow$ der  $\leftarrow$ iCopiar(rOtra) '\ote{r.tam}'
+    or.tam  $\leftarrow$ r.tam + rOtra.tam + 1 '\ote{1}'
+    ret $\leftarrow$ or '\ote{1}'
+    
+'\ofi{O(r.tam)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iAnd}{\Inout {r}{restr}, \In {rOtra}{restr}}{restr}'
+    
+    estr and $\rightarrow$  <"AND",NULL,NULL,NULL> '\ote{1}'
+    and$\rightarrow$izq  $\leftarrow$ iCopiar(r) '\ote{r.tam}'
+    and$\rightarrow$ der  $\leftarrow$ iCopiar(rOtra) '\ote{r.tam}'
+    and.tam  $\leftarrow$ r.tam + rOtra.tam + 1 '\ote{1}'
+    ret $\leftarrow$ and '\ote{1}'
+    
+'\ofi{O(r.tam)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iVerifica}{\In {r}{restr},\In {ts}{$dicc_t$(tags,bool)}}{bool}'
+    
+   if r.nombre = "NOT" : '\ote{1}'
+     res $\leftarrow$ ($\neg$ iVerifica(r.izq,ts)) '\ote{r.tam}'
+   else if r.nombre  = "AND": '\ote{1}'
+     res $\leftarrow$ (iVerifica(r.izq,ts) && iVerifica(r.der,ts)) '\ote{r.tam}'
+   else if r.nombre = "OR": '\ote{1}'
+     res $\leftarrow$ (iVerifica(r.izq,ts) || iVerifica(r.der,ts)) '\ote{r.tam}'
+   else:
+    res $\leftarrow$ definido?(r.nombre, ts)
+   endif
+       
+'\ofi{O(r.tam)}'
+\end{lstlisting}
+
+\subsubsection{Complejidad de iVerifica}
+Calcularemos la complejidad en base a m, la cantidad de nodos del \'arbol. 
+En el peor caso de iVerifica (AND o OR) nos quedamos con dos subproblemas que tienen la mitad de tama\~no que el original, as\'i que
+a = 2 y c = 2.
+M\'as all\'a de esto, se hace una cantidad constante de comparaciones y asignaciones, por lo que podemos decir que f(n) $\in$ O(1).
+Usamos el primer caso del Teorema Maestro, porque $n^{log_2(2)-\epsilon}$ = n$^{1-\epsilon}$. Entonces, si elegimos, por ejemplo
+$\epsilon$ = 1, nos queda O($n^0$) = O(1) y sabemos que f(n) tiene esa complejidad.
+Por lo tanto, utilizando el primer caso tenemos que T(n) $\in$ O($m^{log_2(2)}$) = O(m).
+
+\begin{lstlisting}[mathescape]
+'\alg{iCopiar}{\In {r}{restr}}{restr}'
+    
+   restr copia
+   copia.nombre  $\leftarrow$ r.nombre '\ote{64}'
+   copia.tam  $\leftarrow$ r.tam '\ote{1}'
+   copia.izq  $\leftarrow$ NULL '\ote{1}'
+   copia.der  $\leftarrow$ NULL '\ote{1}'
+   if r.izq != NULL
+    copia.izq  $\leftarrow$  iCopiar(&(r.izq)) '\ote{r.izq$\rightarrow$tam}'
+   end if
+   if r.der != NULL
+    copia.der  $\leftarrow$  iCopiar(&(r.der)) '\ote{copy(r.der$\rightarrow$tam)}'
+   end if 
+       
+'\ofi{O(r.tam)}'
+\end{lstlisting}
+
+\subsubsection{Complejidad de iCopiar}
+La demostraci\'on de la complejidad es an\'aloga a la de iVerifica ya que es la misma recursi\'on y el caso base es O(1).
+
+
+
+

@@ -1,0 +1,504 @@
+ 
+\section{Modulo Ciudad}
+
+
+\subsection{Interfaz}
+
+  \textbf{se explica con}: \tadNombre{Ciudad}, \tadNombre{Iterador Unidireccional(nat)}.
+
+  \textbf{generos}: \TipoVariable{ciudad} \TipoVariable{itVectorNat}.
+
+ % \textbf{usa}: Vector($\alpha$), Bool, Nat, Mapa, Cola de Prioridad($\alpha$), Conjunto de String, DiccionarioString($\alpha$)
+
+  %\textbf{exporta}:
+
+  \subsubsection{Operaciones de Ciudad}
+
+  \InterfazFuncion{Crear}{\In{m}{mapa}}{ciudad}
+  [true] % invRep(mapa) o algo como mapa valido ??
+  {$res$ $\igobs$ crear($m$)}
+  [$O(1)$]
+  [crea una ciudad robotica con un mapa preestablecido]
+  [el mapa se agrega a la ciudad por referencia y no se puede modificar]\\ 
+
+  \InterfazFuncion {Entrar}{\In{cs}{conj$_T$(string)}, \In{e}{string}, \Inout{c}{ciudad}}{}
+  [$e$ $\in$ estaciones(mapa($c$)) $\land$ $c$ $\igobs$ $c_0$]
+  {$c \igobs$ entrar($cs$, $e$, $c_0$)}
+  [$O$($|e_m|$ * E + ($|e_m|$ + R) * S + $N_{total}$)]
+  [agrega un robot a la ciudad, su rur es la cantidad de robots ya agregados, sus tags y estacion son los parametros pasados]
+  [se pasa todo por referencia] \\  
+
+  \InterfazFuncion{Mover}{\In{u}{nat}, \In{e}{string}, \Inout{c}{ciudad}}{}
+  [$e \in$ estaciones(mapa($c$)) $\land$
+  $u \in$ robots($c$) $\land$ 
+  conectadas?($e$, estacion($u$), $c$) $\land$
+  $c \igobs c_0$]
+  {$c \igobs$ mover($u$, $e$, $c_0$)}
+  [$O(|e1| + |e2| + log N_{e1} + log N_{e2} )$] %ver
+  [mueve un robot de una estacion a otra]
+  [] \\  
+
+  \InterfazFuncion{Inspeccion}{\In{e}{string}, \Inout{c}{ciudad}}{}
+  [$e \in$ estaciones(mapa($c$)) $\land$ $c$ $\igobs$ $c_0$]
+  {$c \igobs$ inspeccion($e$, $c_0$)}
+  [$O(|e| + log N_e)$]
+  [realiza la inspeccion, eliminando si es necesario el robot mas infractor en la estacion]
+  [] \\  
+
+  \InterfazFuncion{Robots}{\In{c}{ciudad}}{itVectorNat}
+  [true]
+  {esPermutacion?(Siguientes($res$), conjALista(robots($c$)))}
+  [$O(1)$]
+  [dada una ciudad, me da un iterador de sus rurs]
+  [] \\  
+
+  \InterfazFuncion {Estaciones}{\In {c}{ciudad}} {itLista(string)}
+  [true]
+  {SecuSuby($res$) $\igobs$ estaciones(mapa($c$))}
+  [$O(1)$]
+  [Dada una ciudad, me da un iterador de sus rurs]
+  [] \\  
+
+  \InterfazFuncion {Infracciones} {\In{n}{nat}, \In{c}{ciudad}}{nat}
+  [$n$ $\in$ robots($c$)]
+  {$res \igobs$ \#infracciones($n$, $c$)}
+  [$O(1)$]
+  [Dado un robot, me da sus infracciones]
+  [] \\  
+
+  \InterfazFuncion {Estacion}{\In{n}{nat}, \In{c}{ciudad}}{string}
+  [$n \in$ robots($c$)]
+  {$res \igobs$ estacion($n$, $c$)}
+  [$O(1)$]
+  [Dado un robot, me da su estacion actual]
+  [] \\  
+
+  \InterfazFuncion {Tags}{\In{n}{nat}, \In{c}{ciudad}}{$conj_{T}$}
+  [$n \in$ robots($c$)]
+  {$res \igobs$ tags($n$, $c$)}
+  [$O(1)$]
+  [Dado un robot, me da sus caracteristicas]
+  [] \\  
+
+  \subsubsection{Operaciones de itVectorNat}
+
+  \InterfazFuncion{CrearIt}{\In{c}{Ciudad}}{itVectorNat}
+  [true]
+  {Siguientes($res$) $\igobs$ $indices(vivos(c))$}
+  [$O(1)$]
+  [Crea y devuelve un iterador de los robots.]\\
+
+  \InterfazFuncion{HayMas?}{\In{it}{itVectorNat}}{bool}
+  [true]
+  {$res$ $\igobs$ HayMas?($it$)}
+  [$O(Longitud(Siguientes(it))$]
+  [Informa si hay m\'as elementos por iterar.]\\
+  
+  \InterfazFuncion{Pr\'oximo}{\Inout{it}{itVectorNat}}{nat}
+  [HayMas?(it) $\land$ $it \igobs it_0$]
+  {$it$ $\igobs$ Avanzar($it_0$) $\land$ $res \igobs$ Actual($it_0$)}
+  [$O(1)$]
+  [Avanza el iterador y devuelve el actual.]\\
+
+\subsection{Representaci\'on}
+
+  \begin{Estructura}{ciudad}[estr]
+    \begin{Tupla}[estr]
+      \tupItem{\#robots}{nat}%
+      \tupItem{\\ \#infracciones}{vector(nat)}%
+      \tupItem{\\ estacion}{vector(string)}%
+      \tupItem{\\ tags}{vector(conj$_T$)}%
+      \tupItem{\\ vivos}{vector(bool)}%
+      \tupItem{\\ sendasPermitidas}{vector(dicc$_T$(dicc$_T$(bool)))}%
+      \tupItem{\\ robotsEnEstacion}{dicc$_T$(colaPrior(tupla(nat, nat)))}%
+      \tupItem{\\ sacarRobotDeEstacion}{vector(itColaPrior)}%
+      \tupItem{\\ mapa}{map}%
+    \end{Tupla}
+
+  \end{Estructura}
+
+\subsubsection{Invariante de Representaci\'on}
+
+\renewcommand{\labelenumi}{(\Roman{enumi})}
+
+\begin{enumerate}
+\item Las longitudes de los vectores coinciden con la cantidad de robots
+\item Todas las estaciones estan en las estaciones del mapa de la ciudad
+\item Las estaciones padres en las sendas tienen orden lexicograficamente mayor a sus estaciones conectadas
+\item Para cada robot vivo, el siguiente de su iterador en sacarRobotDeEstacion es una tupla cuyo segundo valor es el rur
+\item Para cada robot vivo, su estacion en la posicion correspondiente del vector esta dentro del mapa
+\item Para cada robot vivo, sus sendasPermitidas corresponden a combinaciones de estaciones que estan conectadas segun el mapa
+y cuya restriccion es verificada por los tags del robot
+\item Los indices que son true de los vivos, son los mismos que combinar todos los rurs de robotsEnEstacion
+\item Para cada robot de robotsEnEstacion, su estacion es la que indica el vector de estaciones y sus infracciones las que indica el vector de infracciones
+\end{enumerate}
+
+\Rep[estr][e]{
+
+(long($e$.\#infracciones) = $e$.\#robots $\land$ long($e$.estacion) = $e$.\#robots $\land$ \\
+long($e$.tags) = $e$.\#robots $\land$ long($e$.vivos) = $e$.\#robots $\land$ \\
+long($e$.sendasPermitidas) = $e$.\#robots $\land$ long($e$.sacarRobotDeEstacion) = $e$.\#robots) \\ $\yluego$ \\
+
+($\forall s$: string)(
+  (def?($s$, $e$.sendasPermitidas) $\lor$ \\
+  def?($s$, $e$.robotsEnEstacion)) \\
+  $\Rightarrow$ esta($s$, estaciones($e$.mapa))
+) \\ $\yluego$ \\
+
+($\forall s, t$: string)(
+  (def?($t$, $e$.sendasPermitidas) $\yluego$ def?($s$, obtener($t$, $e$.sendasPermitidas)))\\
+  $\Rightarrow$ (esta($s$, estaciones($e$.mapa)) $\land$ $s$ < $t$)
+) \\ $\yluego$ \\
+
+($\forall i$: nat)(
+  ($i$ < $e$.\#robots $\yluego$ $e$.vivos[$i$] = true) $\impluego$ \\
+  (
+    (HaySiguiente?(e.sacarRobotDeEstacion[i]) $\yluego$ $\pi_2$(Siguiente(e.sacarRobotDeEstacion[i])) = i) $\land$ \\
+    esta($e$.estacion[$i$], estaciones($e$.mapa)) $\land$ \\
+    (
+      ($\forall s, t$: string)(\\
+        (def?($s$, $e$.tags) $\Rightarrow$ 0 < long($s$) < 65) $\land$ \\
+        (
+          (def?($s$, $e$.sendasPermitidas[$i$]) $\yluego$ def?($t$, obtener($s$, $e$.sendasPermitidas[i]))) <=> \\
+          (
+            conectadas?($s$, $t$, $e$.mapa) $\yluego$ \\
+            verifica?($e$.tags[$i$], restriccion($s, t, e$.mapa))
+          )
+        )
+      )
+    )
+  )
+) \\ $\land$ \\
+
+esPermutacion?(indices($e$.vivos), combinar($e$.robotsEnEstacion)) \\ $\land$ \\
+
+($\forall s$: string)(
+  (def?($s$, $e$.robotsEnEstacion) $\impluego$ \\
+  (
+    ($\forall t$: tupla(string, string)) \\
+    (
+      (esta?($t$, inorder(obtener($s$, $e$.robotsEnEstacion)))) $\Rightarrow$ \\
+      (
+        $\pi_1(t)$ < $e$.\#robots $\yluego$ \\
+        (
+          $e$.estacion[$\pi_1(t)$] = s $\land$ \\
+          $e$.\#infracciones[$\pi_1(t)$] = $\pi_2(t)$
+        )
+      )
+    )
+  )
+)
+
+}
+
+\mbox{}
+
+  ~     
+  
+  \tadOperacion{combinar}{dicc(string, colaPrior(tupla(nat, nat)))/d}{lista(nat)}{}
+  \tadAxioma{combinar($d$)}{auxCombinar($d$, $d$.claves)}
+
+  ~     
+  
+  \tadOperacion{auxCombinar}{dicc(string, colaPrior(tupla(nat, nat)))/d, lista(string)/l}{lista(nat)}{$ l \subseteq d$.claves}
+  \tadAxioma{auxCombinar($d, l$)}{
+    \IF vacia?($l$) THEN <> ELSE filtrar(colaALista(obtener(prim($l$), $d$))) \& auxCombinar($d$, fin($l$)) FI
+  }
+
+  ~     
+  
+  \tadOperacion{filtrar}{lista(tupla(nat, nat))/l}{lista(nat)}{}
+  \tadAxioma{filtrar($l$)}{
+    \IF vacia?($l$) THEN <> ELSE $\pi_2$(prim($l$)) \textbullet $ $ filtrar(fin($l$)) FI
+  }
+
+  ~     
+  
+  \tadOperacion{indices}{lista(bool)/l}{lista(nat)}{}
+  \tadAxioma{indices($l$)}{indicesDesde($l$, 0)}
+
+  ~     
+  
+  \tadOperacion{indicesDesde}{lista(bool)/l, nat/n}{lista(nat)}{}
+  \tadAxioma{indicesDesde($l, n$)}{
+    \IF vacia?($l$) THEN <> ELSE {
+      \IF prim($l$) = true THEN
+        $n $ \textbullet indicesDesde($l$, n+1) 
+      ELSE
+        indicesDesde($l$, n+1)
+      FI
+      }
+    FI
+  }
+
+  ~     
+  
+  \tadOperacion{esPermutacion?}{lista($\alpha$)/l1, lista($\alpha$)/l2}{bool}{}
+  \tadAxioma{esPermutacion?($l1, l2$)}{
+    estan?($l1, l2$) $\land$ estan?($l2, l1$)
+  }
+
+  ~     
+  
+  \tadOperacion{estan?}{lista($\alpha$)/l1, lista($\alpha$)/l2}{bool}{}
+  \tadAxioma{estan?($l1, l2$)}{
+    vacia?($l2$) $\oluego$ ($\neg$vacia?($l1$) $\yluego$ (esta?(prim($l1$), $l2$) $\land$ estan?(fin($l1$), sacar(prim($l1$), $l2$))))
+  }
+  
+  ~     
+  
+  \tadOperacion{sacar}{$\alpha$/e, lista($\alpha$)/l}{bool}{}
+  \tadAxioma{sacar($e, l$)}{
+    \IF vacia?($l$) THEN <> ELSE {
+      \IF prim($l$ = $e$) THEN
+        fin($l$)
+      ELSE
+        $e$ \textbullet $ $ sacar($e$, fin($l$))
+      FI
+    } FI
+  }
+  Obs: $\alpha$ debe ser comparable con la funcion =.
+
+
+  \tadOperacion{conjALista}{conj($\alpha$)/c}{lista($\alpha$)}{}
+  \tadAxioma{conjALista?($c$)}{
+    \IF $\emptyset$?($c$) THEN <> ELSE dameUno($c$) $ $ \textbullet $ $ conjALista(sinUno($c$)) FI
+  }
+
+%termina el invRep
+
+\subsubsection{Funci\'on de Abstracci\'on}
+  
+  \Abs[estr]{ciudad}[e]{c}{
+    proximoRUR($c$) $\igobs$ $e$.\#robots $\land$ \\
+    mapa($c$) $\igobs$ $e$.mapa $\land$ \\
+    robots($c$) $\igobs$ listaAConj(indices($e$.vivos)) $\yluego$ \\
+    ($\forall i$: nat)(
+      ($i$ $\in$ robots($c$)) $\impluego$ \\ (
+        estacion($i$, $c$) $\igobs$ $e$.estacion[$i$] $\land$ \\
+        tags($i$, $c$) $\igobs$  $e$.tags[$i$] $\land$ \\
+        \#infracciones($i$, $c$) $\igobs$  $e$.\#infracciones[$i$]
+      )
+    )
+  }
+
+  ~     
+
+  Obs: indices fue previamente definido para el Rep.
+
+  ~     
+  
+  \tadOperacion{listaAConj}{lista($\alpha$)/l}{conj($\alpha$)}{}
+  \tadAxioma{listaAConj($l$)}{
+    \IF vacia?($l$) THEN $\emptyset$ ELSE Ag(prim($l$), listaAConj(fin($l$))) FI
+  }
+
+  \subsubsection{Representaci\'on de itVectorNat}
+
+  \begin{Estructura}{itVectorNat}[itVect]
+    \begin{Tupla}[itVect]
+      \tupItem{elementos}{vector(bool)}
+      \tupItem{actual}{nat}%
+    \end{Tupla}
+  \end{Estructura}
+  
+  \subsubsection{Invariante de Representaci\'on de itVectorNat}
+  
+  ~
+
+  \Rep[itVectorNat][it]{true}
+  
+  ~
+
+  \subsubsection{Funcion abstracci\'on de itVectorNat}
+  \Abs[itVectorNat]{itUni($nat$)}[it]{u}{Siguientes(u) $=$ Abs(indicesDesdeIndice(it.actual, it.elementos)}
+
+  ~     
+  
+  \tadOperacion{indicesDesdeIndice}{nat/n, lista(bool)/l}{conj($\alpha$)}{}
+  \tadAxioma{indicesDesdeIndice($n, l$)}{
+    \IF vacia?($l$) THEN <> ELSE $n $ \textbullet $ $ indicesDesdeIndice(n+1, fin($l$)) FI
+  }
+
+%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Algoritmos}
+
+  \subsubsection{Algoritmos de Ciudad}
+
+  \lstset{style=alg}
+
+   \begin{lstlisting}[mathescape]
+'\alg{iCrear}{\In{m}{map}}{estr}'
+
+  res.#robots $\leftarrow$ 0  '\ote{1}'
+  res.#infracciones $\leftarrow$ Vacia()  '\ote{1}'
+  res.estacion $\leftarrow$ Vacia()   '\ote{1}'
+  res.tags $\leftarrow$ Vacia()   '\ote{1}'
+  res.vivos $\leftarrow$ Vacia()  '\ote{1}'
+  res.sacarRobotDeEstacion $\leftarrow$ Vacia()   '\ote{1}'
+  res.map $\leftarrow$ m  '\ote{1}'
+  res.sendasPermitidas $\leftarrow$   '\ote{1}' 
+  itLista it $\leftarrow$ estaciones(m)   '\ote{1}'
+  res.robotsEnEstacion $\leftarrow$ crearDicc()   '\ote{1}'
+  while haySiguientes?(it) do '\ote{1}*\#(estaciones(m))'
+   Definir(Siguiente(it), Vacia(), res.robotsEnEstacion) '\ote{|siguiente(it)|}'
+  endwhile
+  
+'$\ofi{O( \#(estaciones(m)) * E_m )} donde E_m es el tamano de la estacion mas grande$'
+\end{lstlisting}
+
+  \begin{lstlisting}[mathescape]
+  '\alg{iEntrar}{\In{ts}{dictt(string, bool)}, \In{e}{string}, \Inout{c}{ciudad}}{}'
+    nat rurActual '$\leftarrow$' c.'$\#$'robots '\ote{1}'
+    c.#robots '$\leftarrow$' c.'$\#$'robots + 1 '\ote{1}'
+    Agregar(0, c.'$\#$'infracciones) '\ote{|c.$\#$infracciones|}'
+    Agregar(e, c.estacion) '\ote{|c.estaciones|}'
+    Agregar(ts, c.tags) '\ote{|c.tags|}'
+    Agregar(true, c.vivos) '\ote{|c.vivos|}'
+    dicc_T estacionesPermitidas '$\leftarrow$' nuevoDict() '\ote{1}'
+    itLista(tupla(string, string)) iteradorSendas '$\leftarrow$' itSendas(c.mapa) '\ote{1}'
+    while hayProximo(iteradorSendas): '\ote{S}'
+      string estacion1 '$\leftarrow$' primero(siguiente(iteradorSendas)) '\ote{1}'
+      string estacion2 '$\leftarrow$' segundo(siguiente(iteradorSendas)) '\ote{1}'
+      if $\neg$ Definido?(estacionesPermitidas, estacion1): '\ote{|estacion1|}'
+        Definir(estacion1, nuevoDict(), estacionesPermitidas) '\ote{|estacion1|}'
+      endif  
+      restr restriccion '$\leftarrow$' Restriccion(estacion1, estacion2, c.mapa) '\ote{|estacion1|+|estacion2|}'
+      bool result '$\leftarrow$' Verifica?(restriccion, ts) '\ote{|restriccion|}'
+      Definir(estacion2, result, Obtener(estacionesPermitidas, estacion1)) '\ote{|estacion1|+|estacion2|}'
+      Avanzar(iteradorSendas) '\ote{1}'
+    Agregar(c.estacionesPermitidas, estacionesPermitidas) '\ote{|c.estacionesPermitidas|}'
+    colaPrior heapEstacion '$\leftarrow$' Obtener(e, c.robotsEnEstacion) '\ote{|e|}'
+    itColaPrior '$\leftarrow$' Agregar((rurActual, 0), heapEstacion) '\ote{log(|heapEstacion|)}'
+    Agregar(c.sacarRobotDeEstacion, iterador) '\ote{|c.sacarRobotDeEstacion|}'
+  '\ofi{O(N_{total} + S * (|e_{m}| + |R|) + |e|)}'
+  \end{lstlisting}
+
+	Complejidad de iEntrar:
+	Por el invRep de heap sabemos que
+	|c.'$\#$'infracciones| = |c.estaciones| = |c.tags| = |c.vivos| = |c.estacionesPermitidas|  = |c.sacarRobotDeEstacion|= $N_{total}$
+	Por lo tanto, llamar a Agregar para cada una de esas listas, agrega un $N_{total}$ a la complejidad final.
+	Sabemos que itSendas devuelve un iterador de tupla(string, string), donde cada tupla representa cada pareja de estaciones que esta conectada, 
+	por lo tanto, el while tiene $S$ ciclos. Sabemos que cada ciclo tiene complejidad O(|estacion1| + |estacion2| + |restriccion|).
+	Entonces, si R es la restriccion de mayor tama�o en todo el mapa, y $e_{m}$ es la estacion de mayor longitud en el mapa, podemos decir que la
+	complejidad de la parte del while, le agrega un O(S * (|$e_{m}$| + |R|)) a la complejidad total.
+	La parte de objetener el heap dada la estacion, le agrega un total de |e| a la complejidad total.
+	Tambien, insertar en la heap el nuevo elemento, toma O(log($N_{e}$)), donde $N_{e}$ es la cantidad de robots en el heap de la estacion e. 
+	Como $N_{e}$ < $N_{total}$, podemos decir que le agrega un O(log($N_{e}$)) a la complejidad total.
+	Resumiendo, la complejidad final es:
+		O($N_{total}$ + S * (|$e_{m}$| + |R|) + |e| + log($N_{total}$)) = O($N_{total}$ + S * (|$e_{m}$| + |R|) + |e|)
+	
+
+  \begin{lstlisting}[mathescape]
+  '\alg{iMover}{\In{u}{nat}, \In{e}{string}, \Inout{c}{ciudad}}{}'
+    string estacionAnterior = c.estacion[u] '\ote{1}'
+    string min '\ote{1}'
+    string max '\ote{1}'
+    if estacionAnterior < e '\ote{|estacionAnterior| + |e|}'
+      min = estacionAnterior '\ote{1}'
+      max = e '\ote{1}'
+    else
+      min = e '\ote{1}'
+      max = estacionAnterior '\ote{1}'
+    eliminar(c.sacarRobotDeEstacion[u]) '\ote{log($N_{e}$)}'
+    bool result = Obtener(min, Obtener(max, c.estacionesPermitidas[u])) '\ote{|estacionAnterior| + |e|}'
+    if not result '\ote{1}'
+      c.#infracciones[u] = c.#infracciones + 1 '\ote{1}'
+    colaPrior heapEstacion '$\leftarrow$' Obtener(e, c.robotsEnEstacion) '\ote{|e|}'
+    itColaPrior '$\leftarrow$' Agregar((rurActual, c.#infracciones[u]), heapEstacion) '\ote{log(|heapEstacion|)}'
+    c.sacarRobotDeEstacion[u] = iterador) '\ote{1}'
+    c.estacion[u] = e  '\ote{1}'
+  '\ofi{ O(log(N_e) + log(N_{estacionAnterior}) + $|$e$|$ + $|$estacionAnterior$|$)}'
+  \end{lstlisting}
+
+
+  \begin{lstlisting}[mathescape]
+  '\alg{iInspeccion}{\In{e}{string}, \Inout{c}{ciudad}}{}'
+    colaPrior heapEstacion = Obtener(e, c.robotsEnEstacion)  '\ote{|e|}'
+    nat rur = Desencolar(heapEstacion) '\ote{log($N_{e}$)}'
+    vivos[rur] = false '\ote{1}'
+  '\ofi{O(log(N_e) + $|$e$|$)}'
+  \end{lstlisting}
+
+
+\begin{lstlisting}[mathescape]
+'\alg{iRobots}{\In{c}{estr}}{itVectorNat}'
+
+  res $\leftarrow$ CrearIt(c.vivos) '\ote{1}'
+  
+'\ofi{O(1)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iEstaciones}{\In{c}{estr}}{itVector(string)}'
+
+    res $\leftarrow$ Estaciones($c$.mapa) '\ote{1}'
+  
+'\ofi{O(1)}'
+\end{lstlisting}
+%crear it de itlista%
+
+\begin{lstlisting}[mathescape]
+'\alg{iInfracciones}{\In{n}{nat}, \In{c}{estr}}{nat}'
+
+    res $\leftarrow$ c.#infracciones[n] '\ote{1}'
+  
+'\ofi{O(1)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iEstacion}{\In{n}{nat}, \In{c}{estr}}{string}'
+
+    res $\leftarrow$ c.estacion[n] '\ote{1}'
+  
+'\ofi{O(1)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iTags}{\In{n}{nat}, \In{c}{estr}}{$conj_T()$}'
+
+    res $\leftarrow$ c.tags[n] '\ote{1}'
+  
+'\ofi{O(1)}'
+\end{lstlisting}
+
+\subsubsection{Algoritmos de itVectorNat}
+
+\begin{lstlisting}[mathescape]
+'\alg{iCrearIt}{\In{v}{vector(bool)}}{itVectorNat}'
+
+  res.elementos $\leftarrow$ $v$ '\ote{1}' 
+  res.actual $\leftarrow$ 0 '\ote{1}'
+  
+'\ofi{O(1)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iHayM\'as?}{\In{it}{itVectorNat}}{bool}'
+
+  res $\leftarrow$ false '\ote{1}' 
+  nat i = it.actual   '\ote{1}' 
+  while (i < longitud(it.elementos) $\wedge$ $\neg$ res)   '\ote{longitud(it.elementos)}'
+      if it.elementos[i] = true then  '\ote{1}'
+          res = true  '\ote{1}'
+      endif
+      i++ '\ote{1}'
+  
+'\ofi{O(longitud(it.elementos))}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iProximo}{\Inout{it}{itVectorNat}}{nat}'
+
+    bool encontreProximo '\ote{1}'
+    nat i = it.actual '\ote{1}'
+    while (i < longitud(it.elementos) $\wedge$ $\neg$ encontreProximo)  '\ote{longitud(it.elementos)}'
+        if it.elementos[i] = true then '\ote{1}'
+            it.actual = i '\ote{1}'
+            res $\leftarrow$ i
+        endif
+        i++ '\ote{1}'
+  
+'\ofi{O(longitud(it.elementos))}'
+\end{lstlisting}

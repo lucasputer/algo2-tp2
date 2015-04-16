@@ -1,0 +1,127 @@
+
+
+\section{Módulo Lista Enlazada($\alpha$)}
+
+
+\begin{Interfaz}
+  
+  \textbf{parámetros formales}\hangindent=2\parindent\\
+  \parbox{1.7cm}{\textbf{géneros}} $\alpha$\\
+  \parbox[t]{1.7cm}{\textbf{función}}\parbox[t]{\textwidth-2\parindent-1.7cm}{%
+    \InterfazFuncion{Copiar}{\In{a}{$\alpha$}}{$\alpha$}
+    {$res \igobs a$}
+    [$\Theta(copy(a))$]
+    [función de copia de $\alpha$'s]
+  }
+
+  \textbf{se explica con}: \tadNombre{Secuencia$(\alpha)$}, \tadNombre{Iterador Bidireccional($\alpha$)}.
+
+  \textbf{géneros}: \TipoVariable{lista$(\alpha)$}, \TipoVariable{itLista($\alpha$)}.
+
+  \Titulo{Operaciones básicas de lista}
+
+  \InterfazFuncion{Vacía}{}{lista$(\alpha)$}%
+  {$res \igobs \secuencia{}$}%
+  [$\Theta(1)$]
+  [genera una lista vacía.]
+
+  \InterfazFuncion{AgregarAdelante}{\Inout{l}{lista($\alpha$)}, \In{a}{$\alpha$}}{itLista($\alpha$}
+  [$l \igobs l_0$]
+  {$l \igobs \secuencia{a}[l_0]$ $\land$ $res$ $=$ CrearItBi(\secuencia{}, $l$) $\land$ alias(SecuSuby($res$) $=$ $l$)}
+  [$\Theta(copy(a))$]
+  [agrega el elemento $a$ como primer elemento de la lista.  Retorna un iterador a $l$, de forma tal que Siguiente devuelva $a$.]
+  [el elemento $a$ agrega por copia. El iterador se invalida si y sólo si se elimina el elemento siguiente del iterador sin utilizar la función \NombreFuncion{EliminarSiguiente}.]
+
+ 
+  \Titulo{Operaciones del iterador}
+
+  \InterfazFuncion{CrearIt}{\In{l}{lista($\alpha$)}}{itLista($\alpha$)}
+  {$res$ $\igobs$ crearItBi(\secuencia{}, $l$) $\land$ alias(SecuSuby($it$) $=$ $l$)}
+  [$\Theta(1)$]
+  [crea un iterador bidireccional de la lista, de forma tal que al pedir \NombreFuncion{Siguiente} se obtenga el primer elemento de $l$.]
+  [el iterador se invalida si y sólo si se elimina el elemento siguiente del iterador sin utilizar la función \NombreFuncion{EliminarSiguiente}.]
+
+  \InterfazFuncion{CrearItUlt}{\In{l}{lista($\alpha$)}}{itLista($\alpha$)}
+  {$res$ $\igobs$ crearItBi($l$, \secuencia{}) $\land$ alias(SecuSuby($it$) $=$ $l$)}
+  [$\Theta(1)$]
+  [crea un iterador bidireccional de la lista, de forma tal que al pedir \NombreFuncion{Anterior} se obtenga el último elemento de $l$.]  
+  [el iterador se invalida si y sólo si se elimina el elemento siguiente del iterador sin utilizar la función \NombreFuncion{EliminarSiguiente}.]
+
+\end{Interfaz}
+
+\begin{Representacion}
+  
+  \Titulo{Representación de la lista}
+
+  \begin{Estructura}{lista$(\alpha)$}[lst]
+    \begin{Tupla}[lst]
+      \tupItem{primero}{puntero(nodo)}%
+      \tupItem{longitud}{nat}%
+    \end{Tupla}
+
+    \begin{Tupla}[nodo]
+      \tupItem{dato}{$\alpha$}%
+      \tupItem{anterior}{puntero(nodo)}%
+      \tupItem{siguiente}{puntero(nodo)}%
+    \end{Tupla}
+  \end{Estructura}
+
+  \Rep[lst][l]{($l$.primero $=$ NULL) $=$ ($l$.longitud $=$ $0$) $\yluego$ ($l$.longitud $\neq$ $0$ \impluego \\
+    Nodo($l$, $l$.longitud) $=$ $l$.primero $\land$ \\
+    ($\forall i$: nat)(Nodo($l$,$i$)\DRef siguiente $=$ Nodo($l$,$i+1$)\DRef anterior) $\land$ \\
+    ($\forall i$: nat)($1 \leq i <$ $l$.longitud $\implies$ Nodo($l$,$i$) $\neq$ $l$.primero)}\mbox{}
+
+  ~      
+
+  \tadOperacion{Nodo}{lst/l,nat}{puntero(nodo)}{$l$.primero $\neq$ NULL}
+  \tadAxioma{Nodo($l$,$i$)}{\IF $i = 0$ THEN $l$.primero ELSE Nodo(FinLst($l$), $i-1$) FI}
+
+  ~
+
+  \tadOperacion{FinLst}{lst}{lst}{}
+  \tadAxioma{FinLst($l$)}{Lst($l$.primero\DRef siguiente, $l$.longitud $-$ $\min$\{$l$.longitud, $1$\})}
+
+  ~
+
+  \tadOperacion{Lst}{puntero(nodo),nat}{lst}{}
+  \tadAxioma{Lst($p,n$)}{$\langle p, n\rangle$}
+
+  ~
+ 
+  \AbsFc[lst]{secu($\alpha$)}[l]{\IF $l$.longitud $=$ $0$ THEN \secuencia{} ELSE \secuencia{$l$.primero\DRef dato}[Abs(FinLst($l$))] FI}
+
+  \Titulo{Representación del iterador}
+
+  \begin{Estructura}{itLista($\alpha$)}[iter]
+    \begin{Tupla}[iter]
+      \tupItem{siguiente}{puntero(nodo)}%
+      \tupItem{lista}{puntero(lst)}%
+    \end{Tupla}
+  \end{Estructura}
+
+  \Rep[iter][it]{Rep($\ast$($it$.lista)) $\yluego$ ($it$.siguiente $=$ NULL $\oluego$ ($\exists i$: nat)(Nodo($\ast it$.lista, $i$) $=$ $it$.siguiente)}
+
+  ~
+
+  \Abs[iter]{itBi($\alpha$)}[it]{b}{Siguientes($b$) $=$ Abs(Sig($it$.lista, $it$.siguiente)) $\land$\\
+    Anteriores($b$) $=$ Abs(Ant($it$.lista, $it$.siguiente))}
+
+  ~
+
+  \tadOperacion{Sig}{puntero(lst)/l,puntero(nodo)/p}{lst}{Rep($\langle l, p\rangle$)}
+  \tadAxioma{Sig($i, p$)}{Lst($p$, $l$\DRef longitud $-$ Pos($\ast l$, $p$))}
+
+  ~
+
+  \tadOperacion{Ant}{puntero(lst)/l,puntero(nodo)/p}{lst}{Rep($\langle l, p\rangle$)}
+  \tadAxioma{Ant($i, p$)}{Lst(\IF $p$ $=$ $l$\DRef primero THEN NULL ELSE $l$\DRef primero FI, Pos($\ast l$, $p$))}
+
+  ~
+
+  {\small Nota: cuando $p$ $=$ NULL, Pos devuelve la longitud de la lista, lo cual está bien, porque significa que el iterador no tiene siguiente.}
+  \tadOperacion{Pos}{lst/l,puntero(nodo)/p}{puntero(nodo)}{Rep($\langle l, p\rangle$)}
+  \tadAxioma{Pos($l$,$p$)}{\IF $l$.primero $=$ $p$ $\lor$ $l$.longitud $=$ $0$ THEN $0$ ELSE $1$ $+$ Pos(FinLst($l$), $p$) FI}
+
+
+\end{Representacion}
+

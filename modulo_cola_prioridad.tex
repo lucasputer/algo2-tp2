@@ -1,0 +1,451 @@
+\section{Módulo Cola de Prioridad($\alpha$)}
+\subsection{Interfaz}
+
+  \textbf{se explica con}: Cola de Prioridad($\alpha$), Iterador Unidireccional Modificable($\alpha$)
+
+  \textbf{usa}: Nat, bool
+  
+  \textbf{genero}: colaPrior($\alpha$), itColaPrior($\alpha$)
+  
+\subsubsection{Operaciones de Cola de Prioridad}
+
+  \InterfazFuncion{Vacia}{}{colaPrior($\alpha$)}
+  [true]
+  {$res$ $\igobs$ vacia}
+  [O(1)]
+  [Crea una cola de prioridad]\\ 
+  
+  \InterfazFuncion{Vacia?}{\In{c}{colaPrior($\alpha$)}}{bool}
+  [true]
+  {$res$ $\igobs$ vacia?(c)}
+  [O(1)]
+  [Dice si la cola no tiene ningun elemento]\\ 
+
+  \InterfazFuncion{Desencolar}{\Inout{c}{colaPrior($\alpha$)}}{$\alpha$}
+  [$\neg$vacia?($c$) $\land$ $c$ $\igobs$ $c_0$]
+  {$res$ $\igobs$ proximo($c_0$) $\land$ $c$ $\igobs$ desencolar($c_0$)}
+  [O(log(tamano(c)))]
+  [Quita el elemento mas prioritario]\\   
+  
+  \InterfazFuncion{Encolar}{\Inout{c}{colaPrior($\alpha$)}, \In{a}{$\alpha$}}{itColaPrior($\alpha$)}
+  [$c$ $\igobs$ $c_0$ $\land$ $\neg$esta($a$, $c$)] %agregar el esta
+  {$c$ $\igobs$ encolar(a,$c_0$) $\land$ Actual($res$) $\igobs$ $a$}
+  [O(log(tamano(c)))]
+  [Agrega al elemento a a la cola de prioridad]
+  [El iterador se invalida si, y solo si se elimina el elemento siguiente del iterador sin llamar a la funcion Eliminar del mismo]\\ 
+
+
+  \subsubsection{Operaciones auxiliares del TAD}
+  \tadOperacion{tamano}{colaPrior($\alpha$)}{nat}{}
+  \tadAxioma{tamano($c$)}{
+    \IF vacia?($c$) THEN 0 ELSE 1 + tamano(desencolar($c$)) FI
+  }
+
+  ~ 
+
+\subsubsection{Operaciones del iterador}
+
+\InterfazFuncion{CrearIt}{\In{c}{colaPrior($\alpha$)}}{itColaPrior($\alpha$)}
+  [true]
+  {Siguientes($res$) $\igobs$ <> $\land$ Anteriores($res$) $\igobs$ <>}
+  [O(1)]
+  [Crea un iterador]
+  [El iterador se invalida si, y solo si se elimina el elemento siguiente del iterador sin llamar a la funcion Eliminar del mismo]\\ 
+
+
+\InterfazFuncion{Eliminar}{\Inout{it}{itColaPrior($\alpha$)}}{}
+[$it$ $\igobs$ $it_0$ $\land$ HayMas?($it$)]
+{$it$ $\igobs$ Eliminar($it_0$)}
+[O(1)]
+[elimina el elemento siguiente del iterador]\\ 
+
+\InterfazFuncion{HayMas?}{\In{it}{itColaPrior($\alpha$)}}{bool}
+[true]
+{$res$ $\igobs$ HayMas?($it$)}
+[O(1)]
+[Dice si hay siguiente]\\ 
+
+\InterfazFuncion{Actual}{\In{it}{itColaPrior($\alpha$)}}{$\alpha$}
+[HayMas?($it$)]
+{$res$ $\igobs$ Actual($it$)}
+[O(1)]
+[Devuelve el elemento actual]\\ 
+
+\subsection{Representaci\'on}
+  
+  \begin{Estructura}{colaPrior($\alpha$)}[estr]
+
+  \begin{Tupla}[estr]
+    \tupItem{tam}{nat}%
+    \tupItem{\\ cabeza}{puntero(nodo)}%
+  \end{Tupla}
+
+  ~
+
+  \begin{Tupla}[nodo]
+    \tupItem{padre}{puntero(nodo)}%
+    \tupItem{\\ izq}{puntero(nodo)}%
+    \tupItem{\\ der}{puntero(nodo)}%
+    \tupItem{\\ dato}{puntero($\alpha$)}%
+  \end{Tupla}
+
+  \end{Estructura}  
+
+  \subsubsection{Invariante de representaci\'on}
+
+  \renewcommand{\labelenumi}{(\Roman{enumi})}
+
+\begin{enumerate}
+  \item Arbol Binario perfectamente balanceado
+  \item El elemento con mayor prioridad se encuentra en el primer elemento
+  \item Los hijos de un nodo son menores a su padre
+  \item Es izquierdista, o sea, el \'ultimo nivel est\'a lleno desde la izquiera
+  \item Sea n un nodo, solo su padre tiene a n como hijo y adem\'as, su padre no puede ser a la vez parte de su descendencia (no hay ciclos)
+  \item El tam es igual a la cantidad de nodos de la cola, definido por la operacion tamano.
+
+\end{enumerate} 
+
+
+\tadOperacion{ColaALista}{c : puntero(nodo)}{secu(puntero(nodo))}{}
+ \tadAxioma{ColaALista($c$)}{
+   ( \IF $c$.izq == NULL THEN <> ELSE ColaALista(c.izq) FI $\&$  \IF $c$.der == NULL THEN <> ELSE ColaALista(c.der) FI ) $\circ$ c
+  }
+
+  \subsubsection{Funci\'on de abstracci\'on}
+ 
+  %\AbsFc[acuerdoEstr]{}
+  Abs : estr e $\rightarrow$ colaPrior($\alpha$) \{Rep(e)\} \\
+  ($\forall$ e:estr) abs(e) $\equiv$ colaPrior | vacia?(colaPrior) $\equiv$ vacia?(e) $\land$ proximo(colaPrior) $\equiv$ desencolar(e) $\land$ encolar(colaPrior) $\equiv$ encolar(e)
+ 
+  \Abs[estr]{colaPrior($\alpha$)}[e]{c}{
+    vacia?($c$) $\igobs$ $e$.cabeza = NULL $\yluego$ \\
+    $\neg$vacia?($c$) $\impluego$ ( \\
+      proximo($c$) $\igobs$ *((*$e$.cabeza).dato) $\land$ \\
+      desencolar($c$) $\igobs$ unir(Abs(<Tamano(*((*$e$.cabeza).izq)),*((*$e$.cabeza).izq)>), \\
+       Abs(<Tamano(*((*$e$.cabeza).der)),*((*$e$.cabeza).der)>))
+    )
+  }
+  ~
+  ~ 
+  \tadOperacion{unir}{colaPrior($\alpha$)/c1, colaPrior($\alpha$)/c2}{colaPrior($\alpha$)}{}
+  \tadAxioma{unir($c1, c2$)}{
+    \IF vacia?($c1$) THEN vacia ELSE unir(encolar(proximo($c2$), $c1$), desencolar($c2$)) FI
+  }
+  ~ 
+  \tadOperacion{Tamano}{c : puntero(nodo)}{Nat)}{}
+ \tadAxioma{Tamano($c$)}{
+    1 + \IF $c$.izq == NULL THEN 0 ELSE Tamano(c.izq) FI + \IF $c$.der == NULL THEN 0 ELSE Tamano(c.der) FI 
+  }
+    ~ 
+
+
+  \subsection{Representaci\'on del iterador}
+  
+  \begin{Estructura}{itColaPrior($\alpha$)}[iter]
+    \begin{Tupla}[iter]
+    \tupItem{siguiente}{puntero(nodo)}%
+    \tupItem{cola}{puntero(estr)}%
+  \end{Tupla} \\
+  \end{Estructura}  
+
+  \subsubsection{Invariante de Representaci\'on del iterador}
+
+  Rep: iter $\rightarrow$ bool \\ 
+  Rep(it) $\equiv$ true $\Longleftrightarrow$ Rep(*(it.cola)) $\land_L$ (it.siguiente = NULL $\lor_L$ esta?(it.siguiente,ColaALista(it.cola.cabeza) ) \\ 
+
+  %esta mal
+\subsubsection{Funci\'on de Abstracci\'on del iterador}
+ 
+  %\AbsFc[acuerdoEstr]{}
+  Abs : iter it $\rightarrow$ itMod($\alpha$)\\ 
+     Abs(it) $\igobs$ m : itMod($\alpha$) | siguientes(m) $\equiv$ Abs(<Tamano(*(it.siguiente)),*(it.siguiente)>) $\bullet$ <> $\land$ \\
+      anteriores(m) $\equiv$ <>
+  %esta mal
+
+\subsection{Algoritmos}
+\subsubsection{Algoritmos de Cola de Prioridad}
+
+\lstset{style=alg}
+
+\begin{lstlisting}[mathescape]
+'\alg{iVacia}{\In{n}{nat}}{colaPrior}'
+    
+    res.tam $\leftarrow$ 0 '\ote{1}'
+    res.cabeza $\leftarrow$ NULL    '\ote{1}'
+   
+    
+'\ofi{O(1)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iVacia?}{\In{c}{estr}}{bool}'
+    
+    if c.cabeza = NULL: '\ote{1}'
+      res $\leftarrow$ true    '\ote{1}'
+    else:
+      res $\leftarrow$ false  '\ote{1}'
+    endif    
+    
+'\ofi{O(1)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iDesencolar}{\Inout c: estr)}{$\alpha$}'
+
+    puntero(nodo) padreUltimo, ultimo, primerIzquierda, primerDerecha, izquierda, derecha \\
+$\alpha$ dato , maximo \\
+res  $\leftarrow$ c.cabeza.dato \\
+if c.tamano > 1 :                                         '\ote{1}'
+    padreUltimo $\leftarrow$ damePadre(c.tam -1)         '\ote{log(c.tam -1)}'
+    if padreUltimo.der = NULL :                                         '\ote{1}'
+        ultimo $\leftarrow$ padreUltimo.izq                             '\ote{1}'
+        padreUltimo.izq $\leftarrow$ NULL                               '\ote{1}'
+    else: \\
+        ultimo $\leftarrow$ padreUltimo.der                             '\ote{1}'
+        padreUltimo.der $\leftarrow$ NULL                                   '\ote{1}'
+    endif    
+    ultimo.padre $\leftarrow$ NULL                                      '\ote{1}'
+    primerIzquierda  $\leftarrow$ c.cabeza.izq                          '\ote{1}'
+    ultimo.izq $\leftarrow$ primerIzquierda                             '\ote{1}'
+    if primerIzquierda != NULL :                                        '\ote{1}'
+        primerIzquierda.padre = ultimo                                  '\ote{1}'
+    endif    
+    primerDerecha  $\leftarrow$ c.cabeza.der                            '\ote{1}'
+    ultimo.der  $\leftarrow$ primerDerecha                              '\ote{1}'
+    if primerDerecha != NULL :                                          '\ote{1}'
+        primerDerecha.padre  $\leftarrow$ ultimo                        '\ote{1}'
+    endif    
+    c.cabeza  $\leftarrow$ ultimo                                       '\ote{1}'
+    bool inPlace  $\leftarrow$ false                                 '\ote{1}'
+    dato  $\leftarrow$ ultimo.dato                                      '\ote{1}'
+    while $\neg$inPlace :                                               '\ote{log(c.tam)}'
+        izquierda  $\leftarrow$ ultimo.izq                              '\ote{1}'
+        derecha  $\leftarrow$ ultimo.der                                '\ote{1}'
+        if derecha != NULL :                                            '\ote{1}'
+            maximo  $\leftarrow$ max(izquierda.v, derecha.v)            '\ote{1}'
+            if maximo < dato :                                          '\ote{1}'
+                inPlace  $\leftarrow$ true                              '\ote{1}'
+            else: 
+                if maximo = izquierda.dato :                            '\ote{1}'
+                    swapConPadre(izquierda)                             '\ote{1}'
+                else: 
+                    swapConPadre(derecha)                               '\ote{1}'
+                endif
+            endif        
+        else:
+            if izquierda = NULL :                                       '\ote{1}'
+                inPlace  $\leftarrow$ true                              '\ote{1}'
+            else:
+                if izquierda.dato > dato :                              '\ote{1}'
+                    swapConPadre(izquierda)                             '\ote{1}'
+                else: 
+                    inPlace  $\leftarrow$ true                          '\ote{1}'
+                endif
+            endif
+        endif            
+else:\\
+    c.cabeza  $\leftarrow$ NULL                                         '\ote{1}'
+c.tam  $\leftarrow$ c.tam -1                                            '\ote{1}'
+
+'\ofi{O(log(c.tam-1) + 17*O(1) + O(log(c.tam)*14) + 2*O(1)) = O(log(c.tam))}'
+\end{lstlisting}
+
+
+\begin{lstlisting}[mathescape]
+'\alg{iEncolar}{\Inout c: estr, \In dato: $\alpha$}{itColaPrior($\alpha$)}'
+
+    puntero(nodo) nodo = iAgregarAtras(c, dato)         '\ote{1}'
+    iLevantar(c, nodo, false)        '\ote{log(c.tam)}'
+    iter it  $\leftarrow$ iCrearIt(c)  '\ote{1}'
+    it.siguiente $\leftarrow$ nodo '\ote{1}'
+    res $\leftarrow$  it '\ote{1}'
+'\ofi{O(log(c.tam))}'
+\end{lstlisting}
+
+
+\begin{lstlisting}[mathescape]
+pre '$\equiv$' {c.tam > 1 && 0 >= posicion < tam}
+post '$\equiv$' {me devuelve el padre de la posicion que le pase}
+'\alg{iDamePadre}{\Inout c: estr, \In posicion: Nat)}{puntero(nodo)}'
+
+  Nat arraySize$\leftarrow$ 0                                    '\ote{1}'
+  Nat tam$\leftarrow$ posicion                                    '\ote{1}'
+  while tam > 0:                                              '\ote{log(posicion)}'
+      arraySize$\leftarrow$ arraySize + 1                   '\ote{1}'
+      tam$\leftarrow$ (tam - 1)/2                             '\ote{1}'
+  Array(arraySize) array                                  '\ote{1}'
+
+  //arraySize queda de tama'\~n'o log(posicion) 
+  //y posicion es en el peor de los casos c.tam
+
+  Nat cant  $\leftarrow$ 0                                '\ote{1}'
+  while cant < arraySize:                                 '\ote{log(posicion)}'
+      array[cant]  $\leftarrow$ -1                         '\ote{1}'
+      cant $\leftarrow$ cant + 1  '\ote{1}'
+
+  Nat index$\leftarrow$ arraySize - 1                            '\ote{1}'
+  tam$\leftarrow$ posicion                                    '\ote{1}'
+
+  while tam > 0:                                              '\ote{log(posicion)}'
+      array[index]$\leftarrow$ tam mod 2                      '\ote{1}'
+      index$\leftarrow$ index - 1                             '\ote{1}'
+      tam = (tam - 1)/2                                       '\ote{1}'
+
+  index$\leftarrow$ 0                                         '\ote{1}'
+  puntero(nodo) actual$\leftarrow$ c.cabeza                                   '\ote{1}'
+
+  while index < arraySize - 1:                               '\ote{log(posicion)}'
+      if array[index] = 0:                                    '\ote{1}'
+          actual$\leftarrow$ actual.der                       '\ote{1}'
+      else:
+          actual$\leftarrow$ actual.izq                       '\ote{1}'
+      endif
+      index$\leftarrow$ index + 1                             '\ote{1}'
+      
+  return actual         '\ote{1}'
+
+'\ofi{2*O(1) + O(log(posicion))*2*O(1) + O(log(posicion))*O(1) + 2*O(1) + O(log(posicion))*3*O(1) + 2*O(1) + O(log(posicion))*4*O(1) + O(1) = O(log(posicion) = O(log(c.tam))}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+pre '$\equiv$' {el nodo esta dentro del arbol}
+post '$\equiv$' {me devuelve el arbol con el dato del nodo que le pase en la posicion '\\ '
+ de su padre y el dato del padre en la posicion del nodo original}
+'\alg{iSwapConPadre}{\Inout c: estr, \In nodo: puntero(nodo)}{}'
+
+  puntero(nodo) padreObj$\leftarrow$ nodo.padre                             '\ote{1}'
+  puntero(nodo) abuelo$\leftarrow$ padreObj.padre                           '\ote{1}'
+  Bool hermanoADer$\leftarrow$ padreObj.izq.dato = nodo.dato     '\ote{1}'
+  puntero(nodo) hermano
+  if hermanoADer:
+      hermano$\leftarrow$ padreObj.der                        '\ote{1}'
+  else:
+      hermano$\leftarrow$ padreObj.izq                        '\ote{1}'
+  endif
+  
+  puntero(nodo) hijoIzq$\leftarrow$ nodo.izq                                '\ote{1}'
+  puntero(nodo) hijoDer$\leftarrow$ nodo.der                                '\ote{1}'
+  
+  if abuelo != NULL
+      if(abuelo.izq.dato = padreObj.dato):
+          abuelo.izq $\leftarrow$ nodo                          '\ote{1}'
+      else:
+          abuelo.der $\leftarrow$ nodo                          '\ote{1}'
+  endif
+  
+  if hijoIzq != NULL
+      hijoIzq.padre$\leftarrow$ padreObj                     '\ote{1}'
+  endif
+  
+  if hijoDer != NULL)
+      hijoDer.padre $\leftarrow$ padreObj                     '\ote{1}'
+  endif
+                              
+  padreObj.izq$\leftarrow$ hijoIzq                           '\ote{1}'
+  padreObj.der$\leftarrow$ hijoDer                           '\ote{1}'
+  padreObj.padre$\leftarrow$ nodo                             '\ote{1}'
+  
+  if hermano != NULL
+      hermano.padre$\leftarrow$ nodo                           '\ote{1}'
+  endif
+  
+  nodo.padre $\leftarrow$ abuelo                                '\ote{1}'
+  
+  if (hermanoADer)
+      nodo.der$\leftarrow$ hermano                             '\ote{1}'
+      nodo.izq$\leftarrow$ padreObj                           '\ote{1}'
+  else:
+      nodo.izq$\leftarrow$ hermano                             '\ote{1}'
+      nodo.der$\leftarrow$ padreObj                           '\ote{1}'
+  endif
+  
+  if (nodo.padre = NULL)
+      c.cabeza $\leftarrow$ nodo                                   '\ote{1}'
+  endif
+
+'\ofi{21*O(1) = O(1)}'
+\end{lstlisting}
+
+
+\begin{lstlisting}[mathescape]
+pre '$\equiv$' {el nodo a levantar se encuentra en el arbol}
+post '$\equiv$' {si forceLevantar es true devuelve el arbol con el dato del '\\ '
+ nodo en la primer posicion del arbol y si no balancea el arbol}
+'\alg{iLevantar}{\Inout c: estr, \In nodo: puntero(nodo), \In forceLevantar: bool}{}'
+
+    while nodo.padre != NULL $\land$ (nodo.dato > nodo.padre $\lor$ forceLevantar):      '\ote{log(c.tam)}'
+          iSwapConPadre(c,nodo)          '\ote{1}'
+
+'\ofi{O(log(c.tam))}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iAgregarAtras}{\Inout c: estr, \In d: $\alpha$}{puntero(nodo)}'
+
+puntero(nodo) actual                                  '\ote{1}'
+puntero(nodo) nuevo                                   '\ote{1}'
+if c.tam = 0:                                      '\ote{1}'
+    actual $\leftarrow$ NULL                       '\ote{1}'
+else:
+    actual $\leftarrow$ iDamePadre(c.tam)          '\ote{1}'
+    nuevo.dato $\leftarrow$ d                      '\ote{1}'
+    nuevo.padre  $\leftarrow$ actual               '\ote{1}'
+if c.tam = 0:                                      '\ote{1}'
+    c.cabeza$\leftarrow$ nuevo                     '\ote{1}'
+else:
+    if c.tam % 2 == 0:                         '\ote{1}'
+        actual.der = nuevo                    '\ote{1}'
+    else:
+        actual.izq = nuevo                    '\ote{1}'
+c.tam = c.tam + 1                                      '\ote{1}'
+ret  $\leftarrow$  nuevo                               '\ote{1}'
+
+'\ofi{O(11*O(1)) = O(1)}'
+\end{lstlisting}
+
+\subsubsection{Algoritmos del iterador}
+
+\begin{lstlisting}[mathescape]
+'\alg{iCrearIt}{c : estr}{iter}'
+
+iter iterador '\ote{1}'
+iterador.cola $\leftarrow$  c '\ote{1}'
+iterador.siguiente $\leftarrow$ NULL '\ote{1}'
+res $\leftarrow$ iterador '\ote{1}'
+
+'\ofi{O(1)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iHayMas?}{it : iter}{bool}'
+
+if it.siguiente != NULL '\ote{1}'
+   res $\leftarrow$ true '\ote{1}'
+else
+   res $\leftarrow$ false '\ote{1}'   
+endif
+
+'\ofi{O(1)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iEliminar}{it : iter}{}'
+
+iLevantar(it.cola,it.siguiente,true) '\ote{log(c.tam)}'   
+iDesencolar(it.cola) '\ote{log(c.tam)}'   
+it.siguiente $\leftarrow$  NULL'\ote{1}'
+
+'\ofi{O(2*log(c.tam))}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iActual}{it : iter}{$\alpha$}'
+
+res $\leftarrow$ *(it.siguiente)
+
+'\ofi{O(1)}'
+\end{lstlisting}
+
+
+
+

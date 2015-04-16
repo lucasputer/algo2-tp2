@@ -1,0 +1,113 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Módulo Conjunto de String}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Interfaz}
+
+  \textbf{se explica con}: \tadNombre{conj(string)}.
+
+  \textbf{géneros}: \TipoVariable{conj$_T$}.
+
+  \subsubsection{Operaciones básicas de conjunto de string}
+
+  \InterfazFuncion{Vacio}{}{conj$_T$}
+  [true]
+  {$res$ $\igobs$ $\emptyset$}
+  [$O(1)$]
+  [crea un conjunto]
+  []
+  
+  ~  
+
+  \InterfazFuncion{Agregar}{\In{s}{string}, \Inout{c}{conj$_T$}}{}
+  [true]
+  {$c \igobs$ Ag($s, c$)}
+  [$O(|s|)$]
+  [agrega un string al conjunto]
+  []
+  
+  ~  
+
+  \InterfazFuncion{Borrar}{\In{s}{string}, \Inout{c}{conj$_T$}}{}
+  [$s \in c $]
+  {$\neg s \in c $}
+  [$O(|s|)$]
+  [borra un string del conjunto]
+  []
+
+  ~  
+
+  \InterfazFuncion{Pertenece?}{\In{s}{string}, \In{c}{conj$_T$}}{bool}
+  [true]
+  {$res \igobs s \in c $}
+  [$O(|s|)$]
+  [verifica si el string pertenece al conjunto]
+  []
+
+  ~  
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Representacion}
+  
+  \subsubsection{Representación de conjunto de string}
+
+  \begin{Estructura}{map}[estr]
+    donde \TipoVariable{estr} es \TipoVariable{dicc$_T$(bool)}
+  \end{Estructura}
+
+  \subsubsection{Invariante de Representaci\'on}
+
+  \Rep[estr][e]{true}\mbox{}
+
+  \subsubsection{Funci\'on de Abstracci\'on}
+ 
+  \Abs[estr]{conj(string)}[e]{c}{
+    ($\forall s$: string)(
+      $s \in c \Longleftrightarrow $ (
+        def?($s$, $e$) $\yluego$ obtener($s$, $e$) = true
+      )
+    )
+  }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Algoritmos}
+
+\lstset{style=alg}
+
+\begin{lstlisting}[mathescape]
+'\alg{iVacio}{}{estr}'
+
+    res $\leftarrow$ CrearDicc() '\ote{1}'
+
+'\ofi{O(1)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iAgregar}{\In{s}{string}, \Inout{e}{estr}}{}'
+
+    Definir(s, true, e)  '\ote{|s|}'
+
+'\ofi{O(|s|)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iBorrar}{\In{s}{string}, \Inout{e}{estr}}{}'
+
+    Definir(s, false, e)  '\ote{|s|}'
+
+'\ofi{O(|s|)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iPertenece?}{\In{s}{string}, \Inout{e}{estr}}{bool}'
+
+    res $\leftarrow$ Definido?(s, e) $\yluego$ Obtener(s, e) = true '\ote{|s|}'
+
+'\ofi{O(|s|)}'
+\end{lstlisting}
+

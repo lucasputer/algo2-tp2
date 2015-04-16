@@ -1,0 +1,277 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Módulo Mapa}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Interfaz}
+
+  \textbf{se explica con}: \tadNombre{Mapa}.
+
+  \textbf{géneros}: \TipoVariable{map}.
+
+  \subsubsection{Operaciones básicas de mapa}
+
+  \InterfazFuncion{Vacio}{}{map}
+  [true]
+  {$res$ $\igobs$ vacio()}
+  [$O(1)$]
+  [crea un mapa nuevo]
+  []
+  
+  ~  
+
+  \InterfazFuncion{Agregar}{\In{e}{string}, \Inout{m}{map}}{}
+  [$e \not \in$ estaciones($m$) $\land$ |$e$| > $ $ 0 $\land$ $m \igobs m_0$]
+  {$m \igobs$ agregar($e$, $m_0$)}
+  [$O(|e|)$]
+  [agrega una estacion al mapa]
+  [] %TODO: (martin)
+  
+  ~  
+
+  \InterfazFuncion{Conectar}{\In{e1}{string}, \In{e2}{string}, \In{r}{restriccion}, \Inout{m}{map}}{}
+  [$e1 \ne e2 \land$ ($e1 \in$ estaciones($m$) $\land$ $e2 \in$ estaciones($m$)) $\yluego$ ($\neg$ conectadas?($e1$, $e2$)) $\land$ $m \igobs m_0$]
+  {$m \igobs$ conectar($e1$, $e2$, $r$, $m_0$)}
+  [$O(|e1| + |e2|)$]
+  [conecta dos estaciones previamente agregadas con su respectiva restriccion para la senda que forman]
+  []
+  
+  ~  
+
+  \InterfazFuncion{Esta?}{\In{e}{string}, \In{m}{map}}{bool}
+  [true]
+  {$res \igobs e \in$ estaciones($m$)}
+  [$O(|e|)$]
+  [verifica si la estacion fue agregada a la ciudad]
+  []
+  
+  ~  
+
+  \InterfazFuncion{Conectadas?}{\In{e1}{string}, \In{e2}{string}, \In{m}{map}}{bool}
+  [($e1 \in$ estaciones($m$) $\land$ $e2 \in$ estaciones($m$)) $\land$ $m \igobs m_0$]
+  {$res \igobs$ conectadas?($e1$, $e2$, $m$)}
+  [$O(|e1|+|e2|)$]
+  [Se fija si las dos estaciones estan conectadas segun el mapa]
+  []
+  
+  ~  
+
+  \InterfazFuncion{Restriccion}{\In{e1}{string}, \In{e2}{string}, \In{m}{map}}{restriccion}
+  [($e1 \in$ estaciones($m$) $\land$ $e2 \in$ estaciones($m$)) $\yluego$ (conectadas?($e1$, $e2$))]
+  {$res \igobs$ restriccion($e1$, $e2$, $m$)}
+  [$O(|e1| + |e2|)$]
+  [devuelve la restriccion correspondiente a la senda que conecta las dos estaciones en el mapa]
+  []
+  
+  ~  
+
+  \InterfazFuncion{Estaciones}{\In{m}{map}}{itLista(string)}
+  [true]
+  {SecuSuby(res) $\igobs$ estaciones(m)}
+  [$O(1)$]
+  [devuelve un iterador para las estaciones del mapa]
+  []
+  
+  ~  
+
+  \InterfazFuncion{Sendas}{\In{m}{map}}{itLista(tupla(string, string))}
+  [true]
+  {esPermutacion?(res, sendas(m))}
+  [$O(1)$]
+  [devuelve un iterador para los pares de estaciones que forman una senda]
+  []
+  
+  ~  
+
+  \subsubsection{Operaciones Auxiliares del TAD}
+
+  \tadOperacion{sendas}{mapa/m}{lista(tupla(string, string))}{}
+  \tadAxioma{sendas($m$)}{
+    compararTodos(estaciones($m$), estaciones($m$))
+  }
+
+  ~     
+  
+  \tadOperacion{compararTodos}{lista(estacion)/l1, lista(estacion)/l2, mapa/m}{lista(tupla(string, string))}{estan?(l1, estaciones(m)) $\land$ estan?(l2, estaciones(m))}
+  \tadAxioma{compararTodos($l1, l2, m$)}{
+    \IF vacia?($l1$) THEN <> ELSE compararUno(prim($l1$), $l2$) \& compararTodos(fin($l1$, $l2$)) FI
+  }
+  
+  ~     
+  
+  \tadOperacion{compararUno}{estacion/e, lista(estacion)/l, mapa/m}{lista(tupla(string, string))}{esta?(e, estaciones(m)) $\land$ estan?(l, estaciones(m))}
+  \tadAxioma{compararUno($e, l, m$)}{
+    \IF vacia?($l$) THEN 
+      <> 
+    ELSE
+      {
+      \IF $e1$ > prim($l$) $\land$ conectadas?($e1, prim($l$), m$) THEN
+        <$e1, prim($l$)$> $ $ \textbullet $ $ compararUno($e$, fin($l$))
+      ELSE
+        compararUno($e$, fin($l$))
+      FI
+      }
+    FI
+  }
+  
+  ~     
+  
+  \tadOperacion{estan?}{lista($\alpha$)/l1, lista($\alpha$)/l2}{bool}{}
+  \tadAxioma{estan?($l1, l2$)}{
+    vacia?($l2$) $\oluego$ ($\neg$vacia?($l1$) $\yluego$ (esta?(prim($l1$), $l2$) $\land$ estan?(fin($l1$), sacar(prim($l1$), $l2$))))
+  }
+  
+  ~     
+  
+  \tadOperacion{sacar}{$\alpha$/e, lista($\alpha$)/l}{bool}{}
+  \tadAxioma{sacar($e, l$)}{
+    \IF vacia?($l$) THEN <> ELSE {
+      \IF prim($l$ = $e$) THEN
+        sacar($e$, fin($l$))
+      ELSE
+        $e$ \textbullet $ $ sacar($e$, fin($l$))
+      FI
+    } FI
+  }
+  Obs: $\alpha$ debe ser comparable con la funcion =.
+  
+  ~     
+  
+  \tadOperacion{esPermutacion?}{lista($\alpha$)/l1, lista($\alpha$)/l2}{bool}{}
+  \tadAxioma{esPermutacion?($l1, l2$)}{
+    estan?($l1, l2$) $\land$ estan?($l2, l1$)
+  }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Representacion}
+  
+  \subsubsection{Representación de mapa}
+
+  \begin{Estructura}{map}[estr]
+    \begin{Tupla}[estr]
+      \tupItem{estaciones}{lista(string)}%
+      \tupItem{\\ sendas}{lista(tupla(e1: string, e2: string))}%
+      \tupItem{\\ restricciones}{dicc$_{T}$(dicc$_{T}$(restriccion))}%
+    \end{Tupla}
+  \end{Estructura}
+
+  \subsubsection{Invariante de Representaci\'on}
+  
+  \renewcommand{\labelenumi}{(\Roman{enumi})}
+  
+  \begin{enumerate}
+  \item Las estaciones son las mismas que las claves de las sendas
+  \item No esta definida una clave del diccionario dentro de sus diccionarios hijos
+  \item Los diccionarios hijos de una clave estan definidos en el diccionario original
+  \item Las claves de los hijos diccionarios de un item del diccionario tienen menor orden lexicografico que el padre
+  \item Las combinaciones definidas en las restricciones son las mismas que la lista de sendas
+  \end{enumerate}
+
+  \Rep[estr][e]{
+    ($\forall a$: string)($a \in e$.estaciones $<=>$ def?($a$, $e$.restricciones) ) $\land$ \\ 
+    ($\forall c$, $s$: string)(def?($c$, $e$.restricciones) $\impluego$ \\ 
+    ($\neg$def?($c$, obtener($c$, $e$.restricciones)) $\land$ \\ 
+    (def?($s$, obtener($c$, $e$.restricciones)) $\impluego$ (def?($s$, $e$) $\land$ $s < c$)))) $\land$ \\ 
+    ($\forall c$, $s$: string)(def?($c$, $e$.restricciones) $\impluego$ \\ 
+    (def?($s$, obtener($c$, $e$.restricciones)) <=> <$c$, $s$> $\in$ $e$.sendas))}\mbox{}
+
+  \subsubsection{Funci\'on de Abstracci\'on}
+ 
+  \Abs[estr]{mapa}[e]{m}{
+    m.estaciones $\igobs$ e.estaciones $\land$ \\ 
+    ($\forall c$, $s$: string)(($c$ $\in$ estaciones($e$) $\land$ $s$ $\in$ estaciones($e$) $\land$ $c < s$) $\Rightarrow$ \\ 
+                              ((def?($s$, obtener($c$, $e$)) $\igobs$ conectadas?($c$, $s$, $m$)) $\yluego$ \\ 
+                              (def?($s$, obtener($c$, $e$)) $\impluego$ (obtener($s$, obtener($c$, $e$)) $\igobs$ restriccion($c$, $s$, $m$)))))
+  }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Algoritmos}
+
+\lstset{style=alg}
+
+%{Vacio}{}{map}
+\begin{lstlisting}[mathescape]
+'\alg{iVacio}{}{estr}'
+
+    res.estaciones $\leftarrow$ Vacia() '\ote{1}'
+    res.sendas $\leftarrow$ CrearDicc() '\ote{1}'
+
+'\ofi{O(1)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iAgregar}{\In{e}{string}, \Inout{m}{estr}}{}'
+
+    Agregar(e, m.estaciones) '\ote{1}'
+    Definir(e, m.sendas) '\ote{|e|}'
+
+'\ofi{O(|e|)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iConectar}{\In{e1}{string}, \In{e2}{string}, \In{r}{restriccion}, \Inout{m}{estr}}{}'
+  
+  if e1 < e2 then '\ote{1}'
+    Conectar(e2, e1, r, m) '\ote{|e1| + |e2|}'
+  else
+    if $\neg$Definido?(e1, m.restricciones) then '\ote{|e1|}'
+      Definir(e1, CrearDicc(), m.restricciones) '\ote{|e1|}'
+    end if
+    Definir(e2, r, Obtener(e1, m.restricciones)) '\ote{|e1| + |e2|}'
+    AgregarAdelante(m.sendas, <e1, e2>)
+  end if
+
+'\ofi{O(|e1| + |e2|)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iEsta?}{\In{e}{string}, \In{m}{map}}{bool}'
+  
+  res$\leftarrow$ Definido?(e, m.restricciones) '\ote{|e|}'
+
+'\ofi{O(|e|)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iConectadas?}{\In{e1}{string}, \In{e2}{string}, \In{m}{map}}{bool}'
+  
+  res$\leftarrow$ Definido?(e1, m.restricciones) $\yluego$
+        Definido?(e2, Obtener(e1, m.restricciones)) '\ote{|e1| + |e2|}'
+
+'\ofi{O(|e1| + |e2|)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iRestriccion}{\In{e1}{string}, \In{e2}{string}, \In{m}{map}}{restriccion}'
+  
+  if e1 < e2 then '\ote{1}'
+    Restriccion(e2, e1, m) '\ote{|e1| + |e2|}'
+  else
+    res$\leftarrow$ Obtener(e2, Obtener(e1, m.restricciones)) '\ote{|e1| + |e2|}'
+  end if
+
+'\ofi{O(|e1| + |e2|)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iEstaciones}{\In{m}{map}}{itLista(string)}'
+  
+  res$\leftarrow$ CrearIt(e.estaciones) '\ote{1}'
+
+'\ofi{O(1)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iSendas}{\In{m}{map}}{itLista(tupla(string, string))}'
+  
+  res$\leftarrow$ CrearIt(e.sendas) '\ote{1}'
+
+'\ofi{O(1)}'
+\end{lstlisting}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+

@@ -1,0 +1,196 @@
+
+\section{Módulo DiccionarioString($\alpha$)}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Interfaz}
+  
+  \textbf{par\'{a}metros formales} \hangindent=2 \parindent \\
+  \parbox{1.7cm}{\textbf{géneros}} $\alpha$
+  
+  \textbf{se explica con}: \tadNombre{Diccionario(string, $\alpha$)}.
+ 
+  \textbf{géneros}: \TipoVariable{dicc$_T$$(\alpha)$}.
+
+  \subsubsection{Operaciones b\'{a}sicas}
+  
+  \InterfazFuncion{CrearDicc}{}{dicc$_T$$(\alpha)$}%
+  [true]
+  {$res$ $\igobs$ vacio}%
+  [$O(1)$]
+  [crea un diccionario vacio]
+  []
+
+  ~
+
+  \InterfazFuncion{Definido?}{\In{c}{string}, \In{d}{dicc$_T$$(\alpha)$})}{bool}
+  [true]
+	{$res$ $\igobs$ def?($c$, $d$)}
+	[$O(|c|)$]
+	[devuelve si la clave fue previamente definida en el diccionario]
+	[]
+  
+  ~
+
+  \InterfazFuncion{Definir}{\In{c}{string} , \In{s}{$\alpha$}, \Inout{d}{dicc$_T$$(\alpha)$}}{}
+  [$ d \igobs d_0 $]
+  {$ d \igobs$ definir($c, s, d_0$)}
+  [$O$($|c| +$ copy($s$)) ]
+  [define la clave $c$ con el significado $s$ en $d$]
+  []
+  
+  ~
+
+	\InterfazFuncion{Obtener}{\In{c}{string}, \In{d}{dicc$_T$($\alpha$)}}{$\alpha$}
+	[def?($c$, $d$)]
+	{alias($res$ $\igobs$ obtener($c$, $d$))}
+	[$O(|c|)$]
+	[devuelve el significado correspondiente a la clave en el diccinario]
+	[$res$ es modificable si y solo si $d$ es modificable.]
+  
+  ~
+	
+  Obs: copy es una funci\'{o}n  de $\alpha$ en que devuelve el costo de copiar un elemento del g\'{e}nero $\alpha$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Representaci\'on}
+
+\subsubsection{Representaci\'on de DiccionarioString($\alpha$)}
+
+  \begin{Estructura}{dicc$_T$$(\alpha)$}[estr donde \TipoVariable{estr} es \TipoVariable{puntero(nodo)}]
+	\begin{Tupla}[nodo]
+			 \tupItem{significado}{puntero$(\alpha)$}
+			 \tupItem{\\ caracteres}{arreglo[256] de puntero(nodo)}
+		\end{Tupla}
+	\end{Estructura}
+
+\subsubsection{Invariante de Representaci\'on}
+
+\renewcommand{\labelenumi}{(\Roman{enumi})}
+
+\begin{enumerate}
+\item Todas las posiciones del arreglo de caracteres est\'{a}n definidas.
+\item No hay claves de 0 caracteres. Esto es, el nodo raiz tiene el campo significado \TipoVariable{NULL}.
+\item No hay ciclos en el trie. Esto es, existe un n\'{u}mero natural $n$ tal que la cantidad de niveles del \'{a}rbol est\'{a} acotada por $n$.
+\item Dado un nodo cualquiera del trie, existe un \'{u}nico camino desde la ra\'{i}z hasta dicho nodo.
+\end{enumerate}
+
+\Rep[estr][e]{\\
+  ($e$ $\rightarrow$ $significado$ $=$ NULL) $\wedge$\\
+  ($\forall i$: nat)($i < 256$ $\implies$ definido?(e$\rightarrow$ caracteres, $i$)) $\yluego$ \\
+  ($\exists n$: nat)(finaliza$(e, n)$) $\yluego$ \\
+  ($\forall p$, $q$: puntero(nodo))($p$ $\in$ punteros$(e)$ $\wedge$ $q$ $\in$ (punteros$(e) - \{p\}$) $\implies p \neq q)$}\mbox{}
+
+  ~     
+  
+\tadOperacion{finaliza}{estr/e, nat}{bool}{($\forall i$: nat) ($i < 256 \implies$ definido?($e\rightarrow caracteres, i$))}
+	\tadAxioma{finaliza($e,n$)}{$n > 0 \yluego (e =$ NULL $\oluego$ finalizaAux($e\rightarrow caracteres, n - 1, 0))$ }
+
+  ~
+  
+\tadOperacion{finalizaAux}{ad(puntero(nodo))/a, nat, nat/k}{bool}{$k \leq$ tam($a$)}
+	\tadAxioma{finalizaAux($a, n, k$)}{\IF $k = $ tam($a$) THEN true ELSE finaliza($e\rightarrow caracteres[k], n$) $\wedge$ finalizaAux($a, n, k + 1$) FI}
+  
+  ~
+	
+\tadOperacion{punteros}{estr/e}{multiconj(puntero(nodo))}{}
+	\tadAxioma{punteros($e$)}{\IF $e = $ NULL THEN $\emptyset$ ELSE punterosAux($e\rightarrow caracteres$, 0) FI}
+
+  ~
+	
+\tadOperacion{punterosAux}{ad(puntero(nodo))/a , nat/k}{multiconj(puntero(nodo))}{$k \leq$ tam($a$)}
+	\tadAxioma{punterosAux($a,k$)}{\IF $k = $ tam($a$) THEN $\emptyset$ ELSE ({\IF $a[k] =$ NULL THEN $\emptyset$ ELSE  Ag($a[k]$, punteros($a[k]$)) FI}) $\cup$ punterosAux($a, k + 1$) FI}
+
+\subsubsection{Funci\'on de Abstracci\'on}
+
+\Abs[estr]{dicc$_T$($\alpha$)}[e]{d}{($\forall c$: string)(def?($c, d$) $=$ esClave?($c, e$) $\yluego$ \\
+ (def?($c, d$) \impluego obtener($c, d$) $=$ significado($c, e$)))}
+
+ 	~
+ 
+ \tadOperacion{esClave?}{string/c, estr/e}{bool}{Rep($e$)}
+ 	\tadAxioma{esClave?($c, e$)}{\IF vac\'{i}a?($c$) THEN $e\rightarrow significado$ $\neq$ NULL ELSE  $e\rightarrow caracteres$[ord(prim($c$))] $\neq$ NULL \yluego esClave?(fin($c$), $e\rightarrow caracteres$[ord(prim($c$))]) FI}
+
+	~
+
+  \tadOperacion{significado}{string/c, estr/e}{$\alpha$}{Rep($e$) $\wedge$ esClave?($c, e$)}
+  	\tadAxioma{significado($c,e$)}{\IF vac\'{i}a?($c$) THEN $*$($e\rightarrow significado$) ELSE significado(fin($c$), $e\rightarrow caracteres$[ord(prim($c$))]) FI}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Algoritmos}
+
+\lstset{style=alg}
+
+\begin{lstlisting}[mathescape]
+'\alg{iCrearDicc}{}{estr}'
+
+     (res$\rightarrow$ significado) $\leftarrow$ NULL '\ote{1}'
+     (res$\rightarrow$ caracteres) $\leftarrow$ CrearArreglo(256) '\ote{1}'
+     for i $\leftarrow$ 0 to 255 do '\ote{1}'
+         (res$\rightarrow$ caracteres[i]) $\leftarrow$ NULL '\ote{1}'
+     end for
+
+'\ofi{O(1)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iDefinido?}{\In{c}{string}, \In{d}{estr}}{bool}'
+
+     nat i $\leftarrow$ 0 '\ote{1}'
+     bool esta $\leftarrow$ true '\ote{1}'
+     puntero(nodo) actual $\leftarrow$ d '\ote{1}'
+     while i < Longitud(c) $\yluego$ esta do '\ote{|c|}'
+         if actual$\rightarrow$ caracteres[ord(c[i])] = NULL  then '\ote{1}'
+             esta $\leftarrow$ false '\ote{1}'
+         end if
+         actual $\leftarrow$ (actual $\rightarrow$ caracteres[ord(c[i])]) '\ote{1}'
+         i $\leftarrow$ i + 1 '\ote{1}'
+     end while  
+     res $\leftarrow$ (esta $\yluego$ $\neg$(actual$\rightarrow$ significado = NULL)) '\ote{1}'
+
+'\ofi{O(|c|)}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iDefinir}{\In{c}{string}, \In{s}{$\alpha$}, \Inout{d}{estr}}{}'
+
+     nat i $\leftarrow$ 0 '\ote{1}'
+     puntero(nodo) actual $\leftarrow$ d '\ote{1}'
+     while i < Longitud(c) do '\ote{|c|}'
+         if actual$\rightarrow$ caracteres[ord(c[i])] = NULL  then '\ote{1}'
+             (actual$\rightarrow$ caracteres[ord(c[i])]) $\leftarrow$ CrearDicc() '\ote{1}'
+         end if
+         actual $\leftarrow$ (actual$\rightarrow$ caracteres[ord(c[i])]) '\ote{1}'
+         i $\leftarrow$ i + 1 '\ote{1}'
+     end while
+     (actual$\rightarrow$ significado) $\leftarrow$ &Copiar(s) '\ote{copy(s)}'
+
+'\ofi{O(|c|+copy(s))}'
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+'\alg{iObtener}{\In{c}{string}, \In{d}{estr}}{\TipoVariable{$\alpha$}}'
+
+     nat i $\leftarrow$ 0 '\ote{1}'
+     puntero(nodo) actual $\leftarrow$ d '\ote{1}'
+     while i < Longitud(c) do  '\ote{|c|}'
+         actual $\leftarrow$ (actual$\rightarrow$ caracteres[ord(c[i])]) '\ote{1}'
+         i $\leftarrow$ i + 1 '\ote{1}'
+     end while 
+     res $\leftarrow$ *(actual$\rightarrow$ significado) '\ote{1}'
+
+'\ofi{O(|c|)}'
+\end{lstlisting}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Servicios Usados}	
+
+$\alpha$ debe proveer la operaci\'{o}n:
+	
+\InterfazFuncion{Copiar}{\In{s}{$\alpha$}}{$\alpha$}
+{$res$ \igobs $s$}
+[O(copy($s$))]\\
+Donde se copia $s$, de modo que no haya aliasing entre $s$ y $res$
